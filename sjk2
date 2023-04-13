@@ -1,0 +1,254 @@
+CREATE DATABASE IF NOT EXISTS oil_manager;
+
+CREATE TABLE IF NOT EXISTS `oil_manager`.`工作人员信息` (
+  `工作号` CHAR(15),
+  `姓名` VARCHAR(40) UNIQUE,
+  `身份证号` VARCHAR(20),
+  `员工类型` ENUM('销售', '财务', '前台', '经理'),
+  `密码` VARCHAR(30),
+  `电话` VARCHAR(20),
+  PRIMARY KEY (`工作号`, `姓名`, `身份证号`)
+);
+  
+CREATE TABLE IF NOT EXISTS `oil_manager`.`油库信息` (
+  `油库编号` CHAR(100),
+  `名称` VARCHAR(100),
+  `地点` VARCHAR(45),
+  `容量` DECIMAL(10,2) DEFAULT 1000,
+  PRIMARY KEY (`油库编号`, `名称`)
+);
+
+CREATE TABLE IF NOT EXISTS `oil_manager`.`油品类别` (
+  `油品编号` CHAR(50),
+  `名称` VARCHAR(45),
+  `价格` DECIMAL(10,2),
+  PRIMARY KEY (`油品编号`, `名称`),
+  CONSTRAINT chk_名称 CHECK (`名称` IN ('92#汽油', '93#汽油', '95#汽油', '97#汽油', '柴油'))
+);
+
+CREATE TABLE IF NOT EXISTS `oil_manager`.`油品储量信息` (
+  `油品编号` CHAR(30),
+  `储量` DECIMAL(10,2),
+  `油库编号` CHAR(30),
+  PRIMARY KEY (`油品编号`, `油库编号`),
+  FOREIGN KEY(`油品编号`) REFERENCES `油品类别`(`油品编号`),
+  FOREIGN KEY(`油库编号`) REFERENCES `油库信息`(`油库编号`)
+);
+
+CREATE TABLE  IF NOT EXISTS `oil_manager`.`加油记录` (
+  `记录编号` CHAR(30),
+  `车牌号` VARCHAR(30),
+  `油库编号` CHAR(30),
+  `加油量` DECIMAL(10,2),
+  `加油时间` VARCHAR(40),
+  PRIMARY KEY (`记录编号`),
+  FOREIGN KEY(`油库编号`) REFERENCES `油库信息`(`油库编号`),
+  FOREIGN KEY(`车牌号`) REFERENCES `会员信息`(`车牌号`)
+);
+CREATE TABLE IF NOT EXISTS `oil_manager`.`会员等级信息` (
+  `会员等级编号` CHAR(40),
+  `会员等级名称` VARCHAR(30),
+  `折扣` DECIMAL(10,2) UNIQUE,
+  `最低消费金额` DECIMAL(10,2),
+  PRIMARY KEY (`会员等级编号`)
+);
+  
+CREATE TABLE IF NOT EXISTS `oil_manager`.`会员信息` (
+  `会员编号` CHAR(40),
+  `姓名` VARCHAR(45),
+  `身份证号` VARCHAR(18),
+  `会员等级编号` CHAR(40),
+  `车牌号` VARCHAR(30) UNIQUE,
+  `电话` VARCHAR(20),
+  `总消费额`  DECIMAL(10,2),
+  PRIMARY KEY (`会员编号`, `姓名`, `身份证号`),
+  FOREIGN KEY(`会员等级编号`) REFERENCES `会员等级信息`(`会员等级编号`)
+);
+  
+CREATE TABLE IF NOT EXISTS `oil_manager`.`进货信息` (
+  `进货单号` INT,
+  `进货时间` VARCHAR(40),
+  `油品编号` CHAR(50),
+  `油库编号` CHAR(40),
+  `进货人员` VARCHAR(40),
+  `进货量` DECIMAL(10,2),
+  `单价` DECIMAL(8,2),
+  PRIMARY KEY (`进货单号`),
+  FOREIGN KEY(`油品编号`) REFERENCES `油品类别`(`油品编号`),
+  FOREIGN KEY(`油库编号`) REFERENCES `油库信息`(`油库编号`)
+);
+-- 创建进货信息表
+CREATE TABLE IF NOT EXISTS `oil_manager`.`进货信息` (
+    进货编号 INT PRIMARY KEY,
+    油品编号 INT,
+    油库编号 INT,
+    进货量 FLOAT NOT NULL,
+    进货总价 FLOAT NOT NULL,
+    进货时间 DATETIME NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS `oil_manager`.`销售信息` (
+  `销售单号` INT,
+  `销售时间` VARCHAR(40),
+  `会员编号` CHAR(40),
+  `工作号` CHAR(15),
+  `油品编号` CHAR(50),
+  `油库编号` CHAR(40),
+  `销售量` DECIMAL(10,2),
+  `单价` DECIMAL(10,2),
+  `折扣` DECIMAL(10,2),
+  PRIMARY KEY (`销售单号`),
+  FOREIGN KEY(`会员编号`) REFERENCES `会员信息`(`会员编号`),
+  FOREIGN KEY(`工作号`) REFERENCES `工作人员信息`(`工作号`),
+  FOREIGN KEY(`油品编号`) REFERENCES `油品类别`(`油品编号`),
+  FOREIGN KEY(`油库编号`) REFERENCES `油库信息`(`油库编号`)
+);
+-- 初始化进货信息表
+INSERT INTO 进货信息 (进货编号, 油品编号, 油库编号, 进货量, 进货总价, 进货时间)
+VALUES
+(1, 1, 1, 1000, 5000, '2023-04-01 08:00:00'),
+(2, 2, 1, 2000, 9000, '2023-04-02 09:00:00'),
+(3, 3, 1, 3000, 15000, '2023-04-03 10:00:00'),
+(4, 4, 1, 4000, 12000, '2023-04-04 11:00:00'),
+(5, 1, 2, 500, 2500, '2023-04-05 12:00:00'),
+(6, 2, 2, 1000, 4500, '2023-04-06 13:00:00'),
+(7, 3, 2, 1500, 7500, '2023-04-07 14:00:00'),
+(8, 4, 2, 2000, 6000, '2023-04-08 15:00:00');
+CREATE TABLE IF NOT EXISTS `oil_manager`.`销售记录`  (
+    销售编号 INT PRIMARY KEY,
+    油品编号 INT,
+    油库编号 INT,
+    会员编号 INT,
+    销售量 FLOAT NOT NULL,
+    销售额 FLOAT NOT NULL,
+    销售时间 DATETIME NOT NULL
+);
+INSERT INTO 销售记录 (销售编号, 油品编号, 油库编号, 会员编号, 销售量, 销售额, 销售时间)
+VALUES
+(1, 1, 1, 1, 50, 200, '2023-04-01 16:00:00'),
+(2, 2, 1, 2, 100, 400, '2023-04-02 17:00:00'),
+(3, 3, 1, 3, 150, 600, '2023-04-03 18:00:00'),
+(4, 4, 1, 1, 200, 500, '2023-04-04 19:00:00'),
+(5, 1, 2, 2, 25, 100, '2023-04-05 20:00:00'),
+(6, 2, 2, 3, 50, 200, '2023-04-06 21:00:00'),
+(7, 3, 2, 1, 75, 300, '2023-04-07 22:00:00'),
+(8, 4, 2, 2, 100, 250, '2023-04-08 23:00:00'),
+(9, 4, 1, 7,200,500,'2023-03-08 23:00:00');
+INSERT INTO `oil_manager`.`销售记录` (`销售编号`, `油品编号`, `油库编号`, `会员编号`, `销售量`, `销售额`, `销售时间`)VALUES(11, 5, 1, 7,2000,5000,'2023-03-08 23:10:00');
+ALTER TABLE `oil_manager`.`工作人员信息`
+MODIFY `员工类型` ENUM('销售', '财务', '前台', '经理');
+
+ALTER TABLE `oil_manager`.`油品类别`
+ADD CONSTRAINT chk_名称 CHECK (`名称` IN ('92#汽油', '93#汽油', '95#汽油', '97#汽油', '柴油'));
+
+ALTER TABLE `oil_manager`.`会员信息`
+ADD UNIQUE(`车牌号`);
+
+ALTER TABLE `oil_manager`.`工作人员信息`
+ADD `电话` VARCHAR(20);
+
+ALTER TABLE `oil_manager`.`会员信息`
+ADD COLUMN `电话` VARCHAR(20) NULL AFTER `车牌号`;
+
+
+ALTER TABLE `oil_manager`.`油库信息`
+ALTER `容量` SET DEFAULT 1000;
+
+ALTER TABLE `oil_manager`.`油品类别`
+MODIFY `价格` DECIMAL(10,2);
+
+ALTER TABLE `oil_manager`.`油品储量信息`
+MODIFY `储量` DECIMAL(10,2);
+
+ALTER TABLE `oil_manager`.`会员等级信息`
+MODIFY `折扣` DECIMAL(10,2);
+
+ALTER TABLE `oil_manager`.`进货信息`
+MODIFY `进货量` DECIMAL(10,2),
+MODIFY `单价` DECIMAL(8,2);
+
+ALTER TABLE `oil_manager`.`销售信息`
+MODIFY `销售量` DECIMAL(10,2),
+MODIFY `单价` DECIMAL(10,2),
+MODIFY `折扣` DECIMAL(10,2);
+
+CREATE INDEX idx_工作号_销售时间 ON `oil_manager`.`销售信息`(`工作号`, `销售时间`);
+INSERT INTO `oil_manager`.`油库信息` (`油库编号`, `名称`, `地点`, `容量`) VALUES ('1', '油库A', '北京', 1500);
+INSERT INTO `oil_manager`.`油库信息` (`油库编号`, `名称`, `地点`, `容量`) VALUES ('2', '油库B', '上海', 3000);
+INSERT INTO `oil_manager`.`油库信息` (`油库编号`, `名称`, `地点`, `容量`) VALUES ('3', '油库C', '广州', 2000);
+INSERT INTO `oil_manager`.`油库信息` (`油库编号`, `名称`, `地点`, `容量`) VALUES ('4', '油库d', '深圳', 4000);
+INSERT INTO `oil_manager`.`油库信息` (`油库编号`, `名称`, `地点`, `容量`) VALUES ('5', '油库e', '成都', 3200);
+
+INSERT INTO `oil_manager`.`油品类别` (`油品编号`, `名称`, `价格`) VALUES ('1', '92#汽油', 7.32);
+INSERT INTO `oil_manager`.`油品类别` (`油品编号`, `名称`, `价格`) VALUES ('2', '93#汽油', 7.87);
+INSERT INTO `oil_manager`.`油品类别` (`油品编号`, `名称`, `价格`) VALUES ('3', '95#汽油', 8.20);
+INSERT INTO `oil_manager`.`油品类别` (`油品编号`, `名称`, `价格`) VALUES ('4', '97#汽油', 9.16);
+INSERT INTO `oil_manager`.`油品类别` (`油品编号`, `名称`, `价格`) VALUES ('5', '柴油', 6.58);
+
+INSERT INTO `oil_manager`.`工作人员信息` (`工作号`, `姓名`, `身份证号`, `员工类型`, `密码`, `电话`) VALUES ('001', '张三', '110101199001011234', '销售', 'password1', '13800138000');
+INSERT INTO `oil_manager`.`工作人员信息` (`工作号`, `姓名`, `身份证号`, `员工类型`, `密码`, `电话`) VALUES ('002', '李四', '110101199001012345', '财务', 'password2', '13900139000');
+INSERT INTO `oil_manager`.`工作人员信息` (`工作号`, `姓名`, `身份证号`, `员工类型`, `密码`, `电话`) VALUES ('003', '王五', '110101199001013456', '前台', 'password3', '13700137000');
+INSERT INTO `oil_manager`.`工作人员信息` (`工作号`, `姓名`, `身份证号`, `员工类型`, `密码`, `电话`) VALUES ('004', '赵六', '110101199001014567', '经理', 'password4', '13600136000');
+INSERT INTO `oil_manager`.`工作人员信息` (`工作号`, `姓名`, `身份证号`, `员工类型`, `密码`, `电话`) VALUES ('005', '马七', '110101199001015678', '销售', 'password5', '13500135000');
+INSERT INTO `oil_manager`.`工作人员信息` (`工作号`, `姓名`, `身份证号`, `员工类型`, `密码`, `电话`) VALUES ('006', '卢本伟', '110101199001016789', '前台', 'password6', '13400134000');
+
+
+INSERT INTO `oil_manager`.`会员等级信息` (`会员等级编号`, `会员等级名称`, `折扣`, `最低消费金额`) VALUES ('1', '普通会员', 1.00, 0);
+INSERT INTO `oil_manager`.`会员等级信息` (`会员等级编号`, `会员等级名称`, `折扣`, `最低消费金额`) VALUES ('2', '银卡会员', 0.95, 10000);
+INSERT INTO `oil_manager`.`会员等级信息` (`会员等级编号`, `会员等级名称`, `折扣`, `最低消费金额`) VALUES ('3', '金卡会员', 0.90, 20000);
+INSERT INTO `oil_manager`.`会员等级信息` (`会员等级编号`, `会员等级名称`, `折扣`, `最低消费金额`) VALUES ('4', '黑金卡会员', 0.85, 30000);
+INSERT INTO `oil_manager`.`会员等级信息` (`会员等级编号`, `会员等级名称`, `折扣`, `最低消费金额`) VALUES ('5', '钻石卡会员', 0.80, 100000);
+
+-- 油品储量信息
+INSERT INTO `oil_manager`.`油品储量信息` (`油品编号`, `储量`, `油库编号`) VALUES ('1', 800, '1');
+INSERT INTO `oil_manager`.`油品储量信息` (`油品编号`, `储量`, `油库编号`) VALUES ('2', 1200, '2');
+INSERT INTO `oil_manager`.`油品储量信息` (`油品编号`, `储量`, `油库编号`) VALUES ('3', 600, '3');
+INSERT INTO `oil_manager`.`油品储量信息` (`油品编号`, `储量`, `油库编号`) VALUES ('4', 400, '4');
+INSERT INTO `oil_manager`.`油品储量信息` (`油品编号`, `储量`, `油库编号`) VALUES ('5', 1000, '5');
+
+-- 会员信息
+INSERT INTO `oil_manager`.`会员信息` (`会员编号`, `姓名`, `身份证号`, `会员等级编号`, `车牌号`, `电话`, `总消费额` ) VALUES ('1', '陈某', '510101199001011234', '1', '京B12345', '13888888888','200');
+INSERT INTO `oil_manager`.`会员信息` (`会员编号`, `姓名`, `身份证号`, `会员等级编号`, `车牌号`, `电话`, `总消费额` ) VALUES ('5', '刘某', '510101199001011284', '1', '京B12375', '13888888888','0');
+INSERT INTO `oil_manager`.`会员信息` (`会员编号`, `姓名`, `身份证号`, `会员等级编号`, `车牌号`, `电话`, `总消费额` ) VALUES ('2', '李某', '510101199001012345', '2', '京B23456', '13999999999','11200');
+INSERT INTO `oil_manager`.`会员信息` (`会员编号`, `姓名`, `身份证号`, `会员等级编号`, `车牌号`, `电话`, `总消费额` ) VALUES ('3', '周某', '510101199001013456', '3', '京B34567', '13777777777','23000');
+INSERT INTO `oil_manager`.`会员信息` (`会员编号`, `姓名`, `身份证号`, `会员等级编号`, `车牌号`, `电话`, `总消费额` ) VALUES ('4', '吴某', '510101199001014567', '4', '京B45678', '13666666666','45555');
+INSERT INTO `oil_manager`.`会员信息` (`会员编号`, `姓名`, `身份证号`, `会员等级编号`, `车牌号`, `电话`, `总消费额` ) VALUES ('6', '周某', '510101199001014599', '4', '京A123456', '13663366666','42335');
+INSERT INTO `oil_manager`.`会员信息` (`会员编号`, `姓名`, `身份证号`, `会员等级编号`, `车牌号`, `电话`, `总消费额` ) VALUES ('7', '王苗', '510101199001014999', '4', '京A12787', '13668866676','56635');
+-- 进货信息
+INSERT INTO `oil_manager`.`进货信息` (`进货单号`, `进货时间`, `油品编号`, `油库编号`, `进货人员`, `进货量`, `单价`) VALUES (1, '2023-01-01', '1', '1', '张三', 100, 7.32);
+INSERT INTO `oil_manager`.`进货信息` (`进货单号`, `进货时间`, `油品编号`, `油库编号`, `进货人员`, `进货量`, `单价`) VALUES (2, '2023-01-02', '1', '1', '张三', 200, 7.50);
+INSERT INTO `oil_manager`.`进货信息` (`进货单号`, `进货时间`, `油品编号`, `油库编号`, `进货人员`, `进货量`, `单价`) VALUES (3, '2023-01-03', '1', '1', '张三', 200, 7.50);
+INSERT INTO `oil_manager`.`进货信息` (`进货单号`, `进货时间`, `油品编号`, `油库编号`, `进货人员`, `进货量`, `单价`) VALUES (4, '2023-01-04', '2', '2', '张三', 300, 7.87);
+INSERT INTO `oil_manager`.`进货信息` (`进货单号`, `进货时间`, `油品编号`, `油库编号`, `进货人员`, `进货量`, `单价`) VALUES (5, '2023-01-05', '3', '3', '张三', 400, 8.20);
+INSERT INTO `oil_manager`.`进货信息` (`进货单号`, `进货时间`, `油品编号`, `油库编号`, `进货人员`, `进货量`, `单价`) VALUES (6, '2023-03-05', '3', '3', '李四', 900, 8.20);
+INSERT INTO `oil_manager`.`进货信息` (`进货单号`, `进货时间`, `油品编号`, `油库编号`, `进货人员`, `进货量`, `单价`) VALUES (7, '2023-03-06', '2', '2', '王五', 600, 7.87);
+INSERT INTO `oil_manager`.`进货信息` (`进货单号`, `进货时间`, `油品编号`, `油库编号`, `进货人员`, `进货量`, `单价`) VALUES (8, '2023-03-07', '3', '3', '李四', 1900, 8.20);
+-- 销售信息
+INSERT INTO `oil_manager`.`销售信息` (`销售单号`, `销售时间`, `会员编号`, `工作号`, `油品编号`, `油库编号`, `销售量`, `单价`, `折扣`) VALUES (1, '2023-01-03', '1', '001', '1', '1', 50, 7.32, 1.00);
+INSERT INTO `oil_manager`.`销售信息` (`销售单号`, `销售时间`, `会员编号`, `工作号`, `油品编号`, `油库编号`, `销售量`, `单价`, `折扣`) VALUES (2, '2023-01-04', '2', '001', '1', '1', 100, 7.32, 0.95);
+INSERT INTO `oil_manager`.`销售信息` (`销售单号`, `销售时间`, `会员编号`, `工作号`, `油品编号`, `油库编号`, `销售量`, `单价`, `折扣`) VALUES (3, '2023-01-05', '3', '001', '2', '2', 150, 7.87, 0.90);
+INSERT INTO `oil_manager`.`销售信息` (`销售单号`, `销售时间`, `会员编号`, `工作号`, `油品编号`, `油库编号`, `销售量`, `单价`, `折扣`) VALUES (4, '2023-01-06', '4', '001', '3', '3', 200, 8.20, 0.85);
+  
+INSERT INTO `oil_manager`.`销售信息` (加油编号, 车牌号, 油库编号, 加油量, 加油时间) VALUES (1, '京A123456', 1, 50, '2023-01-01');
+
+CREATE TABLE  IF NOT EXISTS `oil_manager`.`加油记录` (
+    记录编号 INT PRIMARY KEY,
+    车牌号 VARCHAR(20) NOT NULL,
+    油库编号 VARCHAR(20) NOT NULL,
+    油品编号 VARCHAR(20) NOT NULL,
+    加油量 DECIMAL(10, 2) NOT NULL,
+    加油时间 DATETIME NOT NULL
+);
+-- 初始化加油记录表数据
+INSERT INTO 加油记录 (记录编号, 车牌号, 油库编号,油品编号, 加油量, 加油时间) VALUES
+(1, '京A123456', 1, 1, 50.00, '2023-04-01 10:00:00'),
+(2, '沪B67890', 2, 2, 30.00, '2023-04-01 14:00:00'),
+(3, '粤C24680', 3, 3, 60.00, '2023-04-01 16:00:00');
+
+
+
+
+
+
+
+
